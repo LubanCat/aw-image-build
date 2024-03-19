@@ -1,0 +1,23 @@
+# ramlog service
+# Stores logs in (compressed) memory
+# This service may block the boot process for up to 30 sec
+
+[Unit]
+Description=memory supported logging
+DefaultDependencies=no
+Before=rsyslog.service sysinit.target syslog.target
+After=zram-config.service
+Conflicts=shutdown.target
+RequiresMountsFor=/var/log /var/log.hdd
+IgnoreOnIsolate=yes
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/lbc/ramlog start
+ExecStop=/usr/lib/lbc/ramlog stop
+ExecReload=/usr/lib/lbc/ramlog write
+RemainAfterExit=yes
+TimeoutStartSec=30sec
+
+[Install]
+WantedBy=sysinit.target

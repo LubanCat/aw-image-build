@@ -1,0 +1,20 @@
+# ZRAM configuration service
+# Create 1 + number of cores compressed block devices
+# This service may block the boot process for up to 30 sec
+
+[Unit]
+Description=ZRAM config
+DefaultDependencies=no
+After=local-fs.target
+Before=ramlog.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/lbc/zram-config start
+ExecStop=/usr/lib/lbc/zram-config stop
+RemainAfterExit=yes
+TimeoutStartSec=30sec
+
+[Install]
+WantedBy=sysinit.target

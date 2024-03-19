@@ -1,0 +1,24 @@
+# overwrite stock lightdm greeter configuration
+if [ -d /etc/lbc/lightdm ]; then cp -R /etc/lbc/lightdm /etc/; fi
+
+# Change theme
+if [ -f /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml ]; then
+    sed -i 's/Materia/Blackbird/g' /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
+fi
+
+# Change icon
+if [ -f /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml ]; then
+    sed -i 's/LoginIcons/Numix/g' /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
+fi
+
+# Hide few items
+if [ -f /usr/share/applications/vim.desktop ]; then
+    mv /usr/share/applications/vim.desktop /usr/share/applications/vim.desktop.hidden
+fi
+
+if [ -f /usr/share/applications/libreoffice-startcenter.desktop ]; then
+    mv /usr/share/applications/libreoffice-startcenter.desktop /usr/share/applications/libreoffice-startcenter.desktop.hidden
+fi
+
+# Disable Pulseaudio timer scheduling which does not work with sndhdmi driver
+if [ -f /etc/pulse/default.pa ]; then sed "s/load-module module-udev-detect$/& tsched=0/g" -i  /etc/pulse/default.pa; fi

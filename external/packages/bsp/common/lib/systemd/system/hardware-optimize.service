@@ -1,0 +1,19 @@
+# hardware optimization service
+# Apply optimisations
+# This service may block the boot process for up to 2 minutes
+
+[Unit]
+Description=hardware optimization
+Before=basic.target
+After=sysinit.target local-fs.target hardware-monitor.target
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/lbc/hardware-optimization start
+ExecStop=/usr/lib/lbc/hardware-optimization stop
+RemainAfterExit=yes
+TimeoutStartSec=2min
+
+[Install]
+WantedBy=basic.target
