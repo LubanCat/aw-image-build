@@ -271,12 +271,16 @@ if [[ ${BUILD_OPT} == update ]]; then
 	fetch_from_repo "$LINUX_SOURCE" "$LINUX_DIR" "$LINUX_BRANCH"
 
 	# lbc-firmware
-	fetch_from_repo "$GIT_SERVER/lbc-firmware.git" "${SOURCE_DIR}/lbc-firmware" "branch:master"
+	fetch_from_repo "$GIT_MIRROR/lbc-firmware.git" "${SOURCE_DIR}/lbc-firmware" "branch:master"
 
 	# ATF
 	if [[ -n ${ATF_SOURCE} ]]; then
 		fetch_from_repo "$ATF_SOURCE" "$ATF_DIR" "$ATF_BRANCH"
 	fi
+
+	# fix sourece files owner
+	find "$SOURCE_DIR" -user 0 -exec chown -h $USER_ID:$USER_ID {} \;
+
 fi
 
 ################################################################################

@@ -10,6 +10,7 @@
 [[ -z $ROOTPWD ]] && ROOTPWD="root" # Must be changed @first login
 [[ -z $USERNAME ]] && USERNAME="cat"
 [[ -z $PASSWORD ]] && PASSWORD="temppwd"
+USER_ID=$(stat --format %u build.sh) #chown source and output files
 TZDATA=$(cat /etc/timezone) # Timezone for target is taken from host or defined here.
 # CTHREADS="-j$(nproc)" # Use all CPU cores for compiling
 CTHREADS="-j$(($(nproc)-1))" # Use all CPU cores for compiling
