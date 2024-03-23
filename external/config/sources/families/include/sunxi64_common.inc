@@ -13,14 +13,14 @@ family_tweaks()
 		chromium_extra_name="chromium-codecs-ffmpeg-extra_107.0.5304.62-0ubuntu1~ppa1~22.04.1_arm64.deb"
 		chromium_browser_l10n_name="chromium-browser-l10n_107.0.5304.62-0ubuntu1~ppa1~22.04.1_all.deb"
 		chromium_url="http://ppa.launchpadcontent.net/saiarcot895/chromium-beta/ubuntu/pool/main/c/chromium-browser"
-		chromium=${BUILD_DIR}/cache/debs/arm64/${chromium_name}
-		chromium_extra=${BUILD_DIR}/cache/debs/arm64/${chromium_extra_name}
-		chromium_browser_l10n=${BUILD_DIR}/cache/debs/arm64/${chromium_browser_l10n_name}
+		chromium=${BUILD_DIR}/debs/browser/${chromium_name}
+		chromium_extra=${BUILD_DIR}/debs/browser/${chromium_extra_name}
+		chromium_browser_l10n=${BUILD_DIR}/debs/browser/${chromium_browser_l10n_name}
 
 		if [[ ! -f $chromium_extra ]]; then
-			wget -P ${BUILD_DIR}/cache/debs/arm64 ${chromium_url}/${chromium_name}
-			wget -P ${BUILD_DIR}/cache/debs/arm64 ${chromium_url}/${chromium_extra_name}
-			wget -P ${BUILD_DIR}/cache/debs/arm64 ${chromium_url}/${chromium_browser_l10n_name}
+			wget -P ${BUILD_DIR}/debs/browser ${chromium_url}/${chromium_name}
+			wget -P ${BUILD_DIR}/debs/browser ${chromium_url}/${chromium_extra_name}
+			wget -P ${BUILD_DIR}/debs/browser ${chromium_url}/${chromium_browser_l10n_name}
 		fi
 
 		install_deb_chroot $chromium_extra
@@ -33,10 +33,10 @@ family_tweaks()
 
 		firefox_name="firefox-esr_102.6.0esr+build1-0ubuntu0.22.04.1_arm64.deb"
 		firefox_url="https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu/pool/main/f/firefox-esr/"
-		firefox=${BUILD_DIR}/cache/debs/arm64/${firefox_name}
+		firefox=${BUILD_DIR}/debs/browser/${firefox_name}
 
 		if [[ ! -f $firefox ]]; then
-			wget -P ${BUILD_DIR}/cache/debs/arm64 ${firefox_url}/${firefox_name}
+			wget -P ${BUILD_DIR}/debs/browser ${firefox_url}/${firefox_name}
 		fi
 
 		install_deb_chroot $firefox
