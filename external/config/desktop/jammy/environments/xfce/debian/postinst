@@ -3,7 +3,7 @@ if [ -d /etc/lbc/lightdm ]; then cp -R /etc/lbc/lightdm /etc/; fi
 
 # Change theme
 if [ -f /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml ]; then
-    sed -i 's/Materia/Blackbird/g' /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
+    sed -i 's/Materia/Numix/g' /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml
 fi
 
 # Change icon
