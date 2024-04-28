@@ -178,9 +178,6 @@ install_common()
 		# install_deb_chroot "${DEB_DIR}/${RELEASE}/${BSP_DESKTOP_PACKAGE_FULLNAME}.deb"
 		# install display manager and PACKAGE_LIST_DESKTOP_FULL packages if enabled per board
 
-		# update packages index
-		chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive apt-get update"
-
 		# install per family packages
 		if [[ -n ${PACKAGE_LIST_DESKTOP_FAMILY} ]]; then
 			chroot "${SDCARD}" /bin/bash -c "DEBIAN_FRONTEND=noninteractive apt-get -yqq --no-install-recommends install $PACKAGE_LIST_DESKTOP_FAMILY"
