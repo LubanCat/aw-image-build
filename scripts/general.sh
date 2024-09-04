@@ -630,12 +630,12 @@ install_pkg_deb ()
 check_pkg_version()
 {
 	if [[ -z $(dpkg -l debootstrap | grep 1.0.134) ]]; then
-		wget http://ftp.cn.debian.org/debian/pool/main/d/debootstrap/debootstrap_1.0.134_all.deb
+		[[ ! -e debootstrap_1.0.134_all.deb ]] && wget http://ftp.cn.debian.org/debian/pool/main/d/debootstrap/debootstrap_1.0.134_all.deb
 		dpkg -i debootstrap_1.0.134_all.deb
 	fi
 
 	if [[ -z $(dpkg -l debian-archive-keyring | grep 2023.4) ]]; then
-		wget http://ftp.cn.debian.org/debian/pool/main/d/debian-archive-keyring/debian-archive-keyring_2023.4_all.deb
+		[[ ! -e debian-archive-keyring_2023.4_all.deb ]] && wget http://ftp.cn.debian.org/debian/pool/main/d/debian-archive-keyring/debian-archive-keyring_2023.4_all.deb
 		sudo dpkg -i debian-archive-keyring_2023.4_all.deb
 	fi
 }
