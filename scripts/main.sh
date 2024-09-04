@@ -121,6 +121,7 @@ fi
 if [[ -z $BOARD ]]; then
 
 	options+=("lubancat-a1"			"Allwinner H618 ")
+	options+=("lubancat-a0"			"Allwinner H618 ")
 
 	menustr="Please choose a Board."
 	BOARD=$(whiptail --title "${titlestr}" --backtitle "${backtitle}" \
