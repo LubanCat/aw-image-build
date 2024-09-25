@@ -37,7 +37,7 @@ if grep -q 'sun4i' /proc/cpuinfo; then DEVICE_TYPE="a10";
 elif grep -q 'sun5i' /proc/cpuinfo; then DEVICE_TYPE="a13";
 else DEVICE_TYPE="a20"; fi
 BOOTLOADER="${CWD}/${DEVICE_TYPE}/bootloader"
-FIRSTSECTOR=32768
+FIRSTSECTOR=43008
 [[ -z $LOADER_SIZE ]] && FIRSTSECTOR=$($(expr $LOADER_SIZE \* 1024 \* 1024 / 512 ))  # offset to 1st partition (we use 4MiB boundaries by default)
 
 #recognize_root
