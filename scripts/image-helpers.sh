@@ -25,10 +25,10 @@
 mount_chroot()
 {
 	local target=$1
-	mount -t proc chproc "${target}"/proc
-	mount -t sysfs chsys "${target}"/sys
-	mount -t devtmpfs chdev "${target}"/dev || mount --bind /dev "${target}"/dev
-	mount -t devpts chpts "${target}"/dev/pts
+	sudo mount -t proc chproc "${target}"/proc
+	sudo mount -t sysfs chsys "${target}"/sys
+	sudo mount -t devtmpfs chdev "${target}"/dev || sudo mount --bind /dev "${target}"/dev
+	sudo mount -t devpts chpts "${target}"/dev/pts
 }
 
 
@@ -42,9 +42,9 @@ umount_chroot()
 	display_alert "Unmounting" "$target" "info"
 	while grep -Eq "${target}.*(dev|proc|sys)" /proc/mounts
 	do
-		umount -l --recursive "${target}"/dev >/dev/null 2>&1
-		umount -l "${target}"/proc >/dev/null 2>&1
-		umount -l "${target}"/sys >/dev/null 2>&1
+		sudo umount -l --recursive "${target}"/dev >/dev/null 2>&1
+		sudo umount -l "${target}"/proc >/dev/null 2>&1
+		sudo umount -l "${target}"/sys >/dev/null 2>&1
 		sleep 5
 	done
 }
@@ -66,12 +66,12 @@ unmount_on_exit()
 	fi
 
 	umount_chroot "${SDCARD}/"
-	umount -l "${SDCARD}"/tmp >/dev/null 2>&1
-	umount -l "${SDCARD}" >/dev/null 2>&1
-	umount -l "${MOUNT}"/boot >/dev/null 2>&1
-	umount -l "${MOUNT}" >/dev/null 2>&1
-	losetup -d "${LOOP}" >/dev/null 2>&1
-	rm -rf --one-file-system "${SDCARD}"
+	sudo umount -l "${SDCARD}"/tmp >/dev/null 2>&1
+	sudo umount -l "${SDCARD}" >/dev/null 2>&1
+	sudo umount -l "${MOUNT}"/boot >/dev/null 2>&1
+	sudo umount -l "${MOUNT}" >/dev/null 2>&1
+	sudo losetup -d "${LOOP}" >/dev/null 2>&1
+	sudo rm -rf --one-file-system "${SDCARD}"
 	exit_with_error "debootstrap-ng was interrupted" || true # don't trigger again
 }
 

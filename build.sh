@@ -69,14 +69,6 @@ done
 check_args "$@"
 
 
-if [[ "${EUID}" == "0" ]] ; then
-	:
-else
-	display_alert "This script requires root privileges, trying to use sudo" "" "wrn"
-	sudo "${TOP_DIR}/build.sh" "$@"
-	exit $?
-fi
-
 # 是否使用离线模式
 if [ "$OFFLINE_WORK" == "yes" ]; then
 

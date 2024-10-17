@@ -52,8 +52,10 @@ titlestr="Choose an option"
 [[ -z $CONSOLE_CHAR ]] && export CONSOLE_CHAR="UTF-8"       # set console to UTF-8 if not set
 
 # Libraries include
-# shellcheck source=debootstrap.sh
-source "${SCR_DIR}"/debootstrap.sh	# system specific install
+# shellcheck source=build-rootfs.sh
+source "${SCR_DIR}"/build-rootfs.sh	# build bsae rootfs
+# shellcheck source=image-build.sh
+source "${SCR_DIR}"/image-build.sh	# creation image
 # shellcheck source=image-helpers.sh
 source "${SCR_DIR}"/image-helpers.sh	# helpers for OS image building
 # shellcheck source=distributions.sh
@@ -62,8 +64,6 @@ source "${SCR_DIR}"/distributions.sh	# system specific install
 source "${SCR_DIR}"/desktop.sh		# desktop specific install
 # shellcheck source=compilation.sh
 source "${SCR_DIR}"/compilation.sh	# patching and compilation of kernel, uboot, ATF
-# shellcheck source=makeboarddeb.sh
-source "${SCR_DIR}"/makeboarddeb.sh		# board support package
 # shellcheck source=general.sh
 source "${SCR_DIR}"/general.sh		# general functions
 
@@ -283,6 +283,9 @@ if [[ ${BUILD_OPT} == update ]]; then
 	find "$SOURCE_DIR" -user 0 -exec chown -h $USER_ID:$USER_ID {} \;
 
 fi
+
+# 导出环境变量
+set > env.txt
 
 ################################################################################
 # 编译

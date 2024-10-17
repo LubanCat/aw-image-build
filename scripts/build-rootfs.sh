@@ -1,16 +1,70 @@
 #!/bin/bash
 #
-# Copyright (c) 2021 Igor Pecovnik, igor.pecovnik@gma**.com
-#
-# This file is licensed under the terms of the GNU General Public
-# License version 2. This program is licensed "as is" without any
-# warranty of any kind, whether express or implied.
-
 
 #
 # Functions:
+# create_base_rootfs
 # create_server_bsp_package
 
+# create_base_rootfs
+#
+# unpacks cached rootfs for $RELEASE or creates one
+#
+create_base_rootfs()
+{
+	local packages_hash=$(get_package_list_hash $ROOTFSCACHE_VERSION)
+
+	local cache_type="server"
+	[[ -n ${DESKTOP_ENVIRONMENT} ]] && local cache_type="${DESKTOP_ENVIRONMENT}"
+
+	local cache_name=${RELEASE}-${cache_type}-${ARCH}.$packages_hash.tar.gz
+	local cache_file=${BUILD_DIR}/rootfs-base/${cache_name}
+	mkdir -p ${BUILD_DIR}/rootfs-base
+
+	sudo rm -rf "$SDCARD"
+	mkdir -p "$SDCARD"
+
+	# stage: verify tmpfs configuration and mount
+	# CLI needs ~1.5GiB, desktop - ~3.5GiB
+	# calculate and set tmpfs mount to use 9/10 of available RAM+SWAP
+	local phymem=$(( (($(awk '/MemTotal/ {print $2}' /proc/meminfo) + $(awk '/SwapTotal/ {print $2}' /proc/meminfo))) / 1024 * 9 / 10 )) # MiB
+	if [[ $BUILD_OS_TYPE == desktop ]]; then
+		local tmpfs_max_size=4096;
+	else
+		local tmpfs_max_size=2048;
+	fi # MiB
+
+	if [[ $phymem -gt $tmpfs_max_size ]]; then
+		local use_tmpfs=yes
+	fi
+
+	# 判断 当系统可用内存足够时挂载tmpfs，增加读写性能
+	[[ $use_tmpfs == yes ]] && sudo mount -t tmpfs -o size=${phymem}M tmpfs $SDCARD
+
+	# 根据校验值判断根文件系统是否更改，未更改使用同名压缩包
+	if [[ -f $cache_file ]]; then
+
+		display_alert "base-rootfs not change, skip" "$cache_name $(( ($(date +%s) - $(stat -c %Y $cache_file)) / 86400 )) days old" "info"
+		display_alert "if you want to rebuild, delate" "${BUILD_DIR}/rootfs-base/$cache_name" "info"
+
+	else
+		display_alert "local not found" "Creating new $RELEASE base-rootfs" "info"
+
+		sudo bash -c "source $SCR_DIR/rootfs/debootstrap.sh"
+
+	fi
+
+	[[ $use_tmpfs == yes ]] && sudo umount --lazy "$SDCARD"
+
+	display_alert "Rootfs base build done" "$HOSTNAME@host" "info"
+	display_alert "Target directory" "${BUILD_DIR}/rootfs-base" "info"
+	display_alert "File name" "${cache_name}" "info"
+}
+
+
+# create_server_bsp_package
+#
+#
 create_server_bsp_package()
 {
 	display_alert "Creating server bsp" "$BSP_SERVER_DEB_NAME" "info"
@@ -204,8 +258,8 @@ create_server_bsp_package()
 	fingerprint_image "${destination}/etc/buidlinfo"
 
 	# fixing permissions (basic), reference: dh_fixperms
-	find "${destination}" -print0 2>/dev/null | xargs -0r chown --no-dereference 0:0
-	find "${destination}" ! -type l -print0 2>/dev/null | xargs -0r chmod 'go=rX,u+rw,a-s'
+	find "${destination}" -print0 2>/dev/null | xargs -0r sudo chown --no-dereference 0:0
+	find "${destination}" ! -type l -print0 2>/dev/null | xargs -0r sudo chmod 'go=rX,u+rw,a-s'
 
 	# create board DEB file
 	fakeroot dpkg-deb -b -Zxz "${destination}" "${destination}.deb" 
@@ -213,5 +267,5 @@ create_server_bsp_package()
 	rsync --remove-source-files -rq "${destination}.deb" "${DEB_DIR}/${RELEASE}/"
 
 	# cleanup
-	rm -rf ${bsptempdir}
+	sudo rm -rf ${bsptempdir}
 }

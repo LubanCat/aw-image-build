@@ -602,7 +602,7 @@ install_pkg_deb ()
 			apt-get -q update
 			apt-get -y upgrade
 		fi
-		apt-get install -qq -y --no-install-recommends $for_install
+		sudo apt-get install -qq -y --no-install-recommends $for_install
 		echo -e "\nPackages installed:" >>$log_file
 		dpkg-query -W \
 		  -f '${binary:Package;-27} ${Version;-23}\n' \
@@ -629,9 +629,9 @@ install_pkg_deb ()
 #
 check_pkg_version()
 {
-	if [[ -z $(dpkg -l debootstrap | grep 1.0.134) ]]; then
-		[[ ! -e debootstrap_1.0.134_all.deb ]] && wget http://ftp.cn.debian.org/debian/pool/main/d/debootstrap/debootstrap_1.0.134_all.deb
-		dpkg -i debootstrap_1.0.134_all.deb
+	if [[ -z $(dpkg -l debootstrap | grep 1.0.137) ]]; then
+		[[ ! -e debootstrap_1.0.137ubuntu3_all.deb ]] && wget https://mirrors.ustc.edu.cn/ubuntu/pool/main/d/debootstrap/debootstrap_1.0.137ubuntu3_all.deb
+		sudo dpkg -i debootstrap_1.0.137ubuntu3_all.deb
 	fi
 
 	if [[ -z $(dpkg -l debian-archive-keyring | grep 2023.4) ]]; then
@@ -719,12 +719,12 @@ prepare_host()
 	nfs-kernel-server ntpdate p7zip-full parted patchutils pigz pixz          \
 	pkg-config pv python3-dev python3-distutils qemu-user-static rsync swig   \
 	systemd-container u-boot-tools udev unzip uuid-dev wget whiptail zip      \
-	zlib1g-dev"
+	zlib1g-dev busybox"
 
 	if [[ $(dpkg --print-architecture) == amd64 ]]; then
 
 		hostdeps+=" distcc lib32ncurses-dev lib32stdc++6 libc6-i386"
-		grep -q i386 <(dpkg --print-foreign-architectures) || dpkg --add-architecture i386
+		grep -q i386 <(dpkg --print-foreign-architectures) || sudo dpkg --add-architecture i386
 
 	else
 
@@ -735,8 +735,8 @@ prepare_host()
 	# Add support for Ubuntu 20.04, 21.04 and Mint 20.x
 	if [[ $HOST_RELEASE =~ ^(focal|hirsute|jammy|ulyana|ulyssa|bullseye|bookworm|uma)$ ]]; then
 		hostdeps+=" python2 python3"
-		ln -fs /usr/bin/python2.7 /usr/bin/python2
-		ln -fs /usr/bin/python2.7 /usr/bin/python
+		sudo ln -fs /usr/bin/python2.7 /usr/bin/python2
+		sudo ln -fs /usr/bin/python2.7 /usr/bin/python
 	else
 		hostdeps+=" python libpython-dev"
 	fi
@@ -785,8 +785,8 @@ prepare_host()
 
 			# bind mount toolchain if defined
 			if [[ -d "${ARMBIAN_CACHE_TOOLCHAIN_PATH}" ]]; then
-				mountpoint -q "${TOP_DIR}"/cache/toolchain && umount -l "${TOP_DIR}"/cache/toolchain
-				mount --bind "${ARMBIAN_CACHE_TOOLCHAIN_PATH}" "${TOP_DIR}"/cache/toolchain
+				mountpoint -q "${TOP_DIR}"/cache/toolchain && sudo umount -l "${TOP_DIR}"/cache/toolchain
+				sudo mount --bind "${ARMBIAN_CACHE_TOOLCHAIN_PATH}" "${TOP_DIR}"/cache/toolchain
 			fi
 
 			display_alert "Checking for external GCC compilers" "" "info"
@@ -831,7 +831,7 @@ prepare_host()
 	# enable arm binary format so that the cross-architecture chroot environment will work
 	if [[ $BUILD_OPT == "image" || $BUILD_OPT == "rootfs" || $BUILD_OPT == "all"  ]]; then
 		modprobe -q binfmt_misc
-		mountpoint -q /proc/sys/fs/binfmt_misc/ || mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
+		mountpoint -q /proc/sys/fs/binfmt_misc/ ||sudo mount binfmt_misc -t binfmt_misc /proc/sys/fs/binfmt_misc
 		if [[ "$(arch)" != "aarch64" ]]; then
 			test -e /proc/sys/fs/binfmt_misc/qemu-arm || update-binfmts --enable qemu-arm
 			test -e /proc/sys/fs/binfmt_misc/qemu-aarch64 || update-binfmts --enable qemu-aarch64

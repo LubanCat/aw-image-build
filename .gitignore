@@ -7,5 +7,6 @@ toolchains/
 # others/
 
 
-debian-archive-keyring_2023.4_all.deb
-debootstrap_1.0.134_all.deb
+debian-archive-keyring_*_all.deb
+debootstrap_*_all.deb
+env.txt
