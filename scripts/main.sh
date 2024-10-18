@@ -53,15 +53,11 @@ titlestr="Choose an option"
 
 # Libraries include
 # shellcheck source=build-rootfs.sh
-source "${SCR_DIR}"/build-rootfs.sh	# build bsae rootfs
-# shellcheck source=image-build.sh
-source "${SCR_DIR}"/image-build.sh	# creation image
+source "${SCR_DIR}"/build-rootfs.sh	# build rootfs fuction
+# shellcheck source=build-image.sh
+source "${SCR_DIR}"/build-image.sh	# creation image for board
 # shellcheck source=image-helpers.sh
 source "${SCR_DIR}"/image-helpers.sh	# helpers for OS image building
-# shellcheck source=distributions.sh
-source "${SCR_DIR}"/distributions.sh	# system specific install
-# shellcheck source=desktop.sh
-source "${SCR_DIR}"/desktop.sh		# desktop specific install
 # shellcheck source=compilation.sh
 source "${SCR_DIR}"/compilation.sh	# patching and compilation of kernel, uboot, ATF
 # shellcheck source=general.sh

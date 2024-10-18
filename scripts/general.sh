@@ -434,7 +434,7 @@ fingerprint_image()
 	cat <<-EOF > "${1}"
 	--------------------------------------------------------------------------------
 	Title:			${BOARD^} $DISTRIBUTION $RELEASE $BRANCH $REVISION
-	Kernel:			Linux $VER
+	Kernel:			Linux $LINUX
 	Build date:		$(date +'%d.%m.%Y')
 	Maintainer:		Embedfire <embedfire@embedfire.com>
 
@@ -763,8 +763,10 @@ prepare_host()
 
 	if systemd-detect-virt -q -c; then
 		display_alert "Running in container" "$(systemd-detect-virt)" "info"
-
 		CONTAINER_COMPAT=yes
+	else
+		display_alert "Not running in container" "$(systemd-detect-virt)" "info"
+		CONTAINER_COMPAT=no
 	fi
 
 

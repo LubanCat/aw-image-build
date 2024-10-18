@@ -83,7 +83,7 @@ if [[ $BUILD_OS_TYPE == "desktop" ]]; then
 	ls -l "${SDCARD}/etc/apt/sources.list.d"
 	cat "${SDCARD}/etc/apt/sources.list"
 
-	local apt_desktop_install_flags=""
+	apt_desktop_install_flags=""
 	if [[ ! -z ${DESKTOP_APT_FLAGS_SELECTED+x} ]]; then
 		for flag in ${DESKTOP_APT_FLAGS_SELECTED}; do
 			apt_desktop_install_flags+=" --install-${flag}"

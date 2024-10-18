@@ -10,7 +10,6 @@
 # Functions:
 
 # debootstrap_ng
-# create_base_rootfs
 # prepare_partitions
 # update_initramfs
 # create_image
@@ -20,7 +19,7 @@
 #
 debootstrap_ng()
 {
-	display_alert "Starting rootfs and image building process for" "${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED:-null} ${DESKTOP_ENVIRONMENT:-null}" "info"
+	display_alert "Starting building image for" "${BRANCH} ${BOARD} ${RELEASE} ${DESKTOP_APPGROUPS_SELECTED:-null} ${DESKTOP_ENVIRONMENT:-null}" "info"
 
 	[[ $ROOTFS_TYPE != ext4 ]] && display_alert "Assuming $BOARD $BRANCH kernel supports $ROOTFS_TYPE" "" "wrn"
 
@@ -46,7 +45,7 @@ debootstrap_ng()
 	fi
 
 	# 判断 当系统可用内存足够时挂载tmpfs，增加读写性能
-	[[ $use_tmpfs == yes ]] && mount -t tmpfs -o size=${phymem}M tmpfs $SDCARD
+	[[ $use_tmpfs == yes ]] && sudo mount -t tmpfs -o size=${phymem}M tmpfs $SDCARD
 
 	local packages_hash=$(get_package_list_hash $ROOTFSCACHE_VERSION)
 	local cache_type="server"
@@ -59,11 +58,11 @@ debootstrap_ng()
 		display_alert "Extracting base rootfs" "$cache_name $(( ($(date +%s) - $(stat -c %Y $cache_file)) / 86400 )) days old" "info"
 
 		# 解压base-rootfs压缩包
-		pv -p -b -r -c -N "[ .... ] $cache_name" "$cache_file" | pigz -d | tar xp --xattrs -C $SDCARD/
+		pv -p -b -r -c -N "[ .... ] $cache_name" "$cache_file" | pigz -d | sudo tar xp --xattrs -C $SDCARD/
 		[[ $? -ne 0 ]]  && exit_with_error "Cache $cache_file is corrupted. Restart."
-		# 添加DNS并创建/etc/apt/sources.list
-		rm -rf $SDCARD/etc/resolv.conf
-		echo "nameserver 8.8.8.8" > $SDCARD/etc/resolv.conf
+		# 添加DNS
+		# sudo rm -rf $SDCARD/etc/resolv.conf
+		# sudo bash -c "echo "nameserver 8.8.8.8" > $SDCARD/etc/resolv.conf"
 	else
 		# base-rootfs不正确时报错退出
 		display_alert "base rootfs has been changed" "$cache_name" "err"
@@ -75,19 +74,15 @@ debootstrap_ng()
 	mount_chroot "$SDCARD"
 
 	# 根据系统版本调整根文件系统基本内容
-	install_distribution_specific
+	sudo bash -c "source $SCR_DIR/rootfs/distributions.sh install_distribution_specific"
 
 	# 修改根文件系统与硬件相关的部分
-	install_common
-
-	# 删除不再需要的程序包
-	display_alert "No longer needed packages" "purge" "info"
-	chroot $SDCARD /bin/bash -c "apt-get autoremove -y"  >/dev/null 2>&1
+	sudo bash -c "source $SCR_DIR/rootfs/distributions.sh install_common"
 
 	umount_chroot "$SDCARD"
 
 	# 清理空间
-	post_debootstrap_tweaks
+	sudo bash -c "source $SCR_DIR/rootfs/distributions.sh post_debootstrap_tweaks"
 
 	# 创建镜像文件，分区并导入文件
 	prepare_partitions
@@ -99,7 +94,7 @@ debootstrap_ng()
 	if [[ $use_tmpfs = yes ]]; then
 		while grep -qs "$SDCARD" /proc/mounts
 		do
-			umount $SDCARD
+			sudo umount $SDCARD
 			sleep 5
 		done
 	fi
@@ -193,7 +188,7 @@ prepare_partitions()
 	rootpart=$((part_num++))
 
 	# 获取 rootfs 大小
-	export rootfs_size=$(du -sm $SDCARD/ | cut -f1) # MiB
+	export rootfs_size=$(sudo du -sm $SDCARD/ | cut -f1) # MiB
 	display_alert "Current rootfs size" "$rootfs_size MiB" "info"
 
 	# 判断是否限制镜像大小
@@ -261,20 +256,20 @@ prepare_partitions()
 	flock -x $FD
 
 	# 检查并挂载镜像到/dev/loop设备
-	LOOP=$(losetup -f)
+	LOOP=$(sudo losetup -f)
 	[[ -z $LOOP ]] && exit_with_error "Unable to find free loop device"
 
 	check_loop_device "$LOOP"
 
-	losetup $LOOP ${SDCARD}.raw
+	sudo losetup $LOOP ${SDCARD}.raw
 
 	# loop device was grabbed here, unlock
 	flock -u $FD
 
-	partprobe $LOOP
+	sudo partprobe $LOOP
 
 	# stage: create fs, mount partitions, create fstab
-	rm -f $SDCARD/etc/fstab
+	sudo rm -f $SDCARD/etc/fstab
 	# 格式化rootfs分区
 	if [[ -n $rootpart ]]; then
 		local rootdevice="${LOOP}p${rootpart}"
@@ -282,46 +277,46 @@ prepare_partitions()
 		display_alert "Creating rootfs" "$ROOTFS_TYPE on $rootdevice"
 
 		# 使用mkfs命令格式化rootfs分区
-		mkfs.${mkfs[$ROOTFS_TYPE]} ${mkopts[$ROOTFS_TYPE]} ${mkopts_label[$ROOTFS_TYPE]:+${mkopts_label[$ROOTFS_TYPE]}"$ROOT_FS_LABEL"} $rootdevice
+		sudo mkfs.${mkfs[$ROOTFS_TYPE]} ${mkopts[$ROOTFS_TYPE]} ${mkopts_label[$ROOTFS_TYPE]:+${mkopts_label[$ROOTFS_TYPE]}"$ROOT_FS_LABEL"} $rootdevice
 
-		[[ $ROOTFS_TYPE == ext4 ]] && tune2fs -o journal_data_writeback $rootdevice > /dev/null
+		[[ $ROOTFS_TYPE == ext4 ]] && sudo tune2fs -o journal_data_writeback $rootdevice > /dev/null
 
 		if [[ $ROOTFS_TYPE == btrfs && $BTRFS_COMPRESSION != none ]]; then
 			local fscreateopt="-o compress-force=${BTRFS_COMPRESSION}"
 		fi
 
-		mount ${fscreateopt} $rootdevice $MOUNT/
+		sudo mount ${fscreateopt} $rootdevice $MOUNT/
 
 		# 重建 fstab
-		local rootfs="UUID=$(blkid -s UUID -o value $rootdevice)"
-		echo "$rootfs / ${mkfs[$ROOTFS_TYPE]} defaults,noatime${mountopts[$ROOTFS_TYPE]} 0 1" >> $SDCARD/etc/fstab
+		local rootfs="UUID=$(sudo blkid -s UUID -o value $rootdevice)"
+		sudo bash -c "echo '$rootfs / ${mkfs[$ROOTFS_TYPE]} defaults,noatime${mountopts[$ROOTFS_TYPE]} 0 1 '>> $SDCARD/etc/fstab"
 	else
 		# update_initramfs will fail if /lib/modules/ doesn't exist
-		mount --bind --make-private $SDCARD $MOUNT/
-		echo "/dev/nfs / nfs defaults 0 0" >> $SDCARD/etc/fstab
+		sudo mount --bind --make-private $SDCARD $MOUNT/
+		sudo bash -c "echo '/dev/nfs / nfs defaults 0 0' >> $SDCARD/etc/fstab"
 	fi
 
 	# 格式化boot分区
 	if [[ -n $bootpart ]]; then
 		display_alert "Creating /boot" "$bootfs on ${LOOP}p${bootpart}"
 		check_loop_device "${LOOP}p${bootpart}"
-		mkfs.${mkfs[$bootfs]} ${mkopts[$bootfs]} ${mkopts_label[$bootfs]:+${mkopts_label[$bootfs]}"$BOOT_FS_LABEL"} ${LOOP}p${bootpart}
-		mkdir -p $MOUNT/boot/
-		mount ${LOOP}p${bootpart} $MOUNT/boot/
-		echo "UUID=$(blkid -s UUID -o value ${LOOP}p${bootpart}) /boot ${mkfs[$bootfs]} defaults${mountopts[$bootfs]} 0 2" >> $SDCARD/etc/fstab
+		sudo mkfs.${mkfs[$bootfs]} ${mkopts[$bootfs]} ${mkopts_label[$bootfs]:+${mkopts_label[$bootfs]}"$BOOT_FS_LABEL"} ${LOOP}p${bootpart}
+		sudo mkdir -p $MOUNT/boot/
+		sudo mount ${LOOP}p${bootpart} $MOUNT/boot/
+		sudo bash -c "echo 'UUID=$(sudo blkid -s UUID -o value ${LOOP}p${bootpart}) /boot ${mkfs[$bootfs]} defaults${mountopts[$bootfs]} 0 2' >> $SDCARD/etc/fstab"
 	fi
 
-	echo "tmpfs /tmp tmpfs defaults,nosuid 0 0" >> $SDCARD/etc/fstab
+	sudo bash -c "echo 'tmpfs /tmp tmpfs defaults,nosuid 0 0' >> $SDCARD/etc/fstab"
 
 	# 创建autoEnv变量
-	echo "rootdev=$rootfs" >> $SDCARD/boot/autoEnv
-	echo "rootfstype=$ROOTFS_TYPE" >> $SDCARD/boot/autoEnv
+	sudo bash -c "echo 'rootdev=$rootfs' >> $SDCARD/boot/autoEnv"
+	sudo bash -c "echo 'rootfstype=$ROOTFS_TYPE' >> $SDCARD/boot/autoEnv"
 	
 	# 修复boot.cmd启动脚本
 	if [[ $rootpart != 1 ]] ; then
-		sed -i 's/mmcblk0p1/mmcblk0p2/' $SDCARD/boot/boot.cmd
-		sed -i 's/mmcblk1p1/mmcblk1p2/' $SDCARD/boot/boot.cmd
-		sed -i -e "s/rootfstype=ext4/rootfstype=$ROOTFS_TYPE/" \
+		sudo sed -i 's/mmcblk0p1/mmcblk0p2/' $SDCARD/boot/boot.cmd
+		sudo sed -i 's/mmcblk1p1/mmcblk1p2/' $SDCARD/boot/boot.cmd
+		sudo sed -i -e "s/rootfstype=ext4/rootfstype=$ROOTFS_TYPE/" \
 			-e "s/rootfstype \"ext4\"/rootfstype \"$ROOTFS_TYPE\"/" $SDCARD/boot/boot.cmd
 	fi
 
@@ -349,28 +344,28 @@ update_initramfs()
 {
 	local chroot_target=$1
 	local target_dir=$(
-		find ${chroot_target}/lib/modules/ -maxdepth 1 -type d -name "*${VER}*"
+		find ${chroot_target}/lib/modules/ -maxdepth 1 -type d -name "*${LINUX}*"
 	)
 	if [ "$target_dir" != "" ]; then
 		update_initramfs_cmd="update-initramfs -uv -k $(basename $target_dir)"
 	else
-		exit_with_error "No kernel installed for the version" "${VER}"
+		exit_with_error "No kernel installed for the version" "${LINUX}"
 	fi
 	display_alert "Updating initramfs..." "$update_initramfs_cmd" ""
-	cp /usr/bin/$QEMU_BINARY $chroot_target/usr/bin/
+	sudo cp /usr/bin/$QEMU_BINARY $chroot_target/usr/bin/
 	mount_chroot "$chroot_target/"
 
-	chroot $chroot_target /bin/bash -c "$update_initramfs_cmd" >> ${LOG_PATH}/install.log 2>&1 || {
+	sudo bash -c "chroot $chroot_target /bin/bash -c '$update_initramfs_cmd' >> ${LOG_PATH}/install.log 2>&1" || {
 		display_alert "Updating initramfs FAILED, see:" "${LOG_PATH}/install.log" "err"
 		exit 23
 	}
 	display_alert "Updated initramfs." "for details see: ${LOG_PATH}/install.log" "info"
 
 	display_alert "Re-enabling" "initramfs-tools hook for kernel"
-	chroot $chroot_target /bin/bash -c "chmod -v +x /etc/kernel/postinst.d/initramfs-tools"
+	sudo bash -c "chroot $chroot_target /bin/bash -c 'chmod -v +x /etc/kernel/postinst.d/initramfs-tools'"
 
 	umount_chroot "$chroot_target/"
-	rm $chroot_target/usr/bin/$QEMU_BINARY
+	sudo rm $chroot_target/usr/bin/$QEMU_BINARY
 }
 
 
@@ -388,7 +383,7 @@ create_image()
 	mkdir -p $IMG_OUT_DIR
 
 	display_alert "Copying files to" "/"
-	rsync -aHWXh \
+	sudo rsync -aHWXh \
 			--exclude="/boot/*" \
 			--exclude="/dev/*" \
 			--exclude="/proc/*" \
@@ -402,12 +397,12 @@ create_image()
 	display_alert "Copying files to" "/boot" "info"
 	if [[ $(findmnt --target $MOUNT/boot -o FSTYPE -n) == vfat ]]; then
 		# fat32
-		rsync -rLtWh \
+		sudo rsync -rLtWh \
 			  --info=progress0,stats1 \
 			  --log-file=${LOG_PATH}/install.log $SDCARD/boot $MOUNT
 	else
 		# ext4
-		rsync -aHWXh \
+		sudo rsync -aHWXh \
 			  --info=progress0,stats1 \
 			  --log-file=${LOG_PATH}/install.log $SDCARD/boot $MOUNT
 	fi
@@ -421,17 +416,17 @@ create_image()
 	df -h
 
 	# stage: write u-boot
-	write_uboot $LOOP
+	sudo bash -c "$SCR_DIR/write-uboot.sh $LOOP"
 
 	# fix wrong / permissions
-	chmod 755 $MOUNT
+	sudo chmod 755 $MOUNT
 
 	# unmount /boot, rootfs  image file last
 	sync
 
-	[[ -n $BOOTFS_TYPE ]] && umount -l $MOUNT/boot
+	[[ -n $BOOTFS_TYPE ]] && sudo umount -l $MOUNT/boot
 
-	umount -l $MOUNT
+	sudo umount -l $MOUNT
 
 	# to make sure its unmounted
 	while grep -Eq '(${MOUNT}|${IMG_BUILD_DIR})' /proc/mounts
@@ -440,9 +435,9 @@ create_image()
 		sleep 5
 	done
 
-	losetup -d $LOOP
+	sudo losetup -d $LOOP
 
-	rm -rf --one-file-system  "$IMG_BUILD_DIR" "$MOUNT"
+	sudo rm -rf --one-file-system  "$IMG_BUILD_DIR" "$MOUNT"
 
 	mkdir -p $IMG_BUILD_DIR
 

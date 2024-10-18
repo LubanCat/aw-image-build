@@ -28,7 +28,7 @@ sudo docker build -t ubuntu-dev .
 HOST_DIR=$(pwd)
 
 # 根据获取的路径挂载并运行容器
-sudo docker run -it --privileged --name ubuntu-dev -v ${HOST_DIR}:${HOST_DIR}:rw ubuntu-dev /bin/bash
+sudo docker run -it --privileged --name ubuntu-dev -v /dev:/tmp/dev:ro -v ${HOST_DIR}:${HOST_DIR}:rw ubuntu-dev /bin/bash
 
 # 在Docker容器的终端总输入以下命令退出容器
 exit

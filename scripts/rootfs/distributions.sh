@@ -121,7 +121,7 @@ install_common()
 
 	cd $TOP_DIR
 
-	display_alert "Updating" "package lists"
+	display_alert "Updating" "apt-get update"
 	chroot "${SDCARD}" /bin/bash -c "apt-get update"
 
 	display_alert "Temporarily disabling" "initramfs-tools hook for kernel"
@@ -505,3 +505,14 @@ post_debootstrap_tweaks()
 	chroot "${SDCARD}" /bin/bash -c "dpkg-divert --quiet --local --rename --remove /sbin/start-stop-daemon"
 	rm -f "${SDCARD}"/usr/sbin/policy-rc.d "${SDCARD}/usr/bin/${QEMU_BINARY}"
 }
+
+
+source env.txt 2> /dev/null
+
+if [[ $1 == install_distribution_specific ]]; then
+	install_distribution_specific
+elif [[ $1 == install_common ]]; then
+	install_common
+elif [[ $1 == post_debootstrap_tweaks ]]; then
+	post_debootstrap_tweaks
+fi

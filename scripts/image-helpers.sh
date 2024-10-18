@@ -13,7 +13,6 @@
 # umount_chroot
 # unmount_on_exit
 # check_loop_device
-# write_uboot
 # copy_all_packages_files_for
 # install_deb_chroot
 
@@ -84,30 +83,11 @@ check_loop_device()
 	if [[ ! -b $device ]]; then
 		if [[ $CONTAINER_COMPAT == yes && -b /tmp/$device ]]; then
 			display_alert "Creating device node" "$device"
-			mknod -m0660 "${device}" b "0x$(stat -c '%t' "/tmp/$device")" "0x$(stat -c '%T' "/tmp/$device")"
+			sudo mknod -m0660 "${device}" b "0x$(stat -c '%t' "/tmp/$device")" "0x$(stat -c '%T' "/tmp/$device")"
 		else
 			exit_with_error "Device node $device does not exist"
 		fi
 	fi
-}
-
-
-# write_uboot <loopdev>
-#
-write_uboot()
-{
-	local loop=$1
-	display_alert "Writing U-boot bootloader" "$loop" "info"
-	TEMP_DIR=$(mktemp -d || exit 1)
-	chmod 700 ${TEMP_DIR}
-
-	dpkg -x "${DEB_DIR}/u-boot/${UBOOT_DEB}_${REVISION}_${ARCH}.deb" ${TEMP_DIR}/
-
-	# source platform install to read $DIR
-	source ${TEMP_DIR}/usr/lib/u-boot/platform_install.sh
-	write_uboot_platform "${TEMP_DIR}${DIR}" "$loop"
-	[[ $? -ne 0 ]] && exit_with_error "U-boot bootloader failed to install" "@host"
-	rm -rf ${TEMP_DIR}
 }
 
 
