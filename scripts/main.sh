@@ -308,6 +308,8 @@ fi
 
 if [[ $BUILD_OPT == rootfs || $BUILD_OPT == all ]]; then
 
+	cd $TOP_DIR
+
 	create_base_rootfs
 
 	# 创建 lbc-firmware包
@@ -325,6 +327,8 @@ if [[ $BUILD_OPT == rootfs || $BUILD_OPT == all ]]; then
 fi
 
 if [[ $BUILD_OPT == image || $BUILD_OPT == all ]]; then
+
+	cd $TOP_DIR
 
 	debootstrap_ng
 

@@ -60,9 +60,6 @@ debootstrap_ng()
 		# 解压base-rootfs压缩包
 		pv -p -b -r -c -N "[ .... ] $cache_name" "$cache_file" | pigz -d | sudo tar xp --xattrs -C $SDCARD/
 		[[ $? -ne 0 ]]  && exit_with_error "Cache $cache_file is corrupted. Restart."
-		# 添加DNS
-		# sudo rm -rf $SDCARD/etc/resolv.conf
-		# sudo bash -c "echo "nameserver 8.8.8.8" > $SDCARD/etc/resolv.conf"
 	else
 		# base-rootfs不正确时报错退出
 		display_alert "base rootfs has been changed" "$cache_name" "err"
@@ -416,7 +413,7 @@ create_image()
 	df -h
 
 	# stage: write u-boot
-	sudo bash -c "$SCR_DIR/write-uboot.sh $LOOP"
+	sudo bash -c "source $SCR_DIR/write-uboot.sh $LOOP"
 
 	# fix wrong / permissions
 	sudo chmod 755 $MOUNT
