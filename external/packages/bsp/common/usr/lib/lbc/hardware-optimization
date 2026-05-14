@@ -105,7 +105,8 @@ prepare_board() {
 			sleep 1
 
 			# 注册hci设备
-			hciattach_lbc -n -s 1500000 ttyAS1 aic &
+			#hciattach_lbc -n -s 1500000 ttyAS1 aic & 
+			hciattach /dev/ttyAS1 any 1500000  flow nosleep &
 
 			;;
 	
