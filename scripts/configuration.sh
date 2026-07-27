@@ -430,9 +430,9 @@ fi
 unset LOG_OUTPUT_FILE
 
 if [[ $DOWNLOAD_MIRROR == "china" ]] ; then
-	DEBIAN_MIRROR='mirrors.ustc.edu.cn/debian'
-	DEBIAN_SECURTY='mirrors.ustc.edu.cn/debian-security'
-	UBUNTU_MIRROR='mirrors.ustc.edu.cn/ubuntu-ports'
+	DEBIAN_MIRROR='mirrors.aliyun.com/debian'
+	DEBIAN_SECURTY='mirrors.aliyun.com/debian-security'
+	UBUNTU_MIRROR='mirrors.aliyun.com/ubuntu-ports'
 else
 	DEBIAN_MIRROR='deb.debian.org/debian'
 	DEBIAN_SECURTY='security.debian.org/'
