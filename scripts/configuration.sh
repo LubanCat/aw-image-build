@@ -430,12 +430,22 @@ fi
 unset LOG_OUTPUT_FILE
 
 if [[ $DOWNLOAD_MIRROR == "china" ]] ; then
-	DEBIAN_MIRROR='mirrors.aliyun.com/debian'
-	DEBIAN_SECURTY='mirrors.aliyun.com/debian-security'
+	if [[ "$RELEASE" =~ ^(buster|bullseye)$ ]]; then
+		DEBIAN_MIRROR='mirrors.aliyun.com/debian-archive/debian'
+		DEBIAN_SECURTY='mirrors.aliyun.com/debian-archive/debian-security'
+	else
+		DEBIAN_MIRROR='mirrors.aliyun.com/debian'
+		DEBIAN_SECURTY='mirrors.aliyun.com/debian-security'
+	fi
 	UBUNTU_MIRROR='mirrors.aliyun.com/ubuntu-ports'
 else
-	DEBIAN_MIRROR='deb.debian.org/debian'
-	DEBIAN_SECURTY='security.debian.org/'
+	if [[ "$RELEASE" =~ ^(buster|bullseye)$ ]]; then
+		DEBIAN_MIRROR='archive.debian.org/debian'
+		DEBIAN_SECURTY='archive.debian.org/debian-security'
+	else
+		DEBIAN_MIRROR='deb.debian.org/debian'
+		DEBIAN_SECURTY='security.debian.org/'
+	fi
 	UBUNTU_MIRROR='ports.ubuntu.com/'
 fi
 
